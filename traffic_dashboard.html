@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TrafficSense — Event Congestion Intelligence</title>
+<link rel="stylesheet" href="styles.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🚦</div>
+    <h1>Traffic<span>Sense</span></h1>
+  </div>
+  <div class="header-right">
+    <div class="live-badge"><div class="live-dot"></div> LIVE SYSTEM</div>
+    <div style="font-size:12px;color:var(--muted);">Bengaluru Traffic Control</div>
+  </div>
+</header>
+
+<nav>
+  <div class="tab active" onclick="showPage('dashboard',this)">📊 Dashboard</div>
+  <div class="tab" onclick="showPage('predict',this)">🔮 Predict & Recommend</div>
+  <div class="tab" onclick="showPage('hotspots',this)">📍 Hotspots</div>
+  <div class="tab" onclick="showPage('patterns',this)">📈 Patterns</div>
+  <div class="tab" onclick="showPage('about',this)">ℹ️ About</div>
+</nav>
+
+<main>
+
+<!-- ========== DASHBOARD ========== -->
+<div id="dashboard" class="page active">
+
+  <div class="kpi-strip">
+    <div class="kpi accent">
+      <div class="kpi-label">Total Events</div>
+      <div class="kpi-value">8,173</div>
+      <div class="kpi-sub">Bengaluru 2023–24</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">High Impact</div>
+      <div class="kpi-value">951</div>
+      <div class="kpi-sub">11.6% of all events</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Medium Impact</div>
+      <div class="kpi-value">4,662</div>
+      <div class="kpi-sub">57% of all events</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Low Impact</div>
+      <div class="kpi-value">2,560</div>
+      <div class="kpi-sub">31.3% of all events</div>
+    </div>
+    <div class="kpi blue">
+      <div class="kpi-label">Model Accuracy</div>
+      <div class="kpi-value">98.8%</div>
+      <div class="kpi-sub">Random Forest · 100 trees</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🗂 <span>Event Category Breakdown</span></div>
+      <div class="chart-wrap"><canvas id="categoryChart" height="240"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚡ <span>Impact Level Distribution</span></div>
+      <div class="chart-wrap"><canvas id="impactChart" height="240"></canvas></div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🕐 <span>Events by Hour of Day</span></div>
+      <div class="chart-wrap"><canvas id="hourChart" height="200"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 <span>Events by Day of Week</span></div>
+      <div class="chart-wrap"><canvas id="weekdayChart" height="200"></canvas></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 <span>Recent Events Feed</span></div>
+    <div class="event-log" id="eventLog"></div>
+  </div>
+</div>
+
+<!-- ========== PREDICT ========== -->
+<div id="predict" class="page">
+  <div class="predict-grid">
+    <div class="card">
+      <div class="card-title">🔮 <span>New Event Prediction</span></div>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px;">Enter event details to forecast traffic impact and get resource recommendations.</p>
+
+      <div class="form-group">
+        <label>Event Category</label>
+        <select id="p_category">
+          <option>Accident</option>
+          <option>Traffic Congestion</option>
+          <option selected>Vehicle Breakdown</option>
+          <option>Road Work</option>
+          <option>Water Logging</option>
+          <option>Tree Fall</option>
+          <option>VIP Movement</option>
+          <option>Road Condition</option>
+          <option>Potholes</option>
+          <option>Weather Related</option>
+          <option>Other</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Event Cause</label>
+        <select id="p_cause">
+          <option value="vehicle_breakdown">Vehicle Breakdown</option>
+          <option value="accident">Accident</option>
+          <option value="congestion">Congestion</option>
+          <option value="construction">Construction / Road Work</option>
+          <option value="water_logging">Water Logging</option>
+          <option value="tree_fall">Tree Fall</option>
+          <option value="public_event">Public Event</option>
+          <option value="procession">Procession</option>
+          <option value="vip_movement">VIP Movement</option>
+          <option value="pot_holes">Potholes</option>
+          <option value="protest">Protest</option>
+          <option value="others">Others</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Hour of Day (0–23)</label>
+        <input type="number" id="p_hour" min="0" max="23" value="8">
+      </div>
+
+      <div class="form-group">
+        <label>Day of Week</label>
+        <select id="p_weekday">
+          <option value="0">Monday</option>
+          <option value="1">Tuesday</option>
+          <option value="2">Wednesday</option>
+          <option value="3">Thursday</option>
+          <option value="4">Friday</option>
+          <option value="5">Saturday</option>
+          <option value="6">Sunday</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Vehicle Involved?</label>
+        <select id="p_vehicle">
+          <option value="1">Yes</option>
+          <option value="0">No</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Corridor Type</label>
+        <select id="p_corridor">
+          <option>Tumkur Road</option>
+          <option>ORR East 1</option>
+          <option>Non-corridor</option>
+          <option>Outer Ring Road</option>
+          <option>Mysore Road</option>
+          <option>Hosur Road</option>
+          <option>Bellary Road</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Priority</label>
+        <select id="p_priority">
+          <option value="High">High</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Route Event (spans multiple locations)?</label>
+        <select id="p_route">
+          <option value="0">No — single location</option>
+          <option value="1">Yes — route event</option>
+        </select>
+      </div>
+
+      <button class="predict-btn" onclick="runPrediction()">⚡ PREDICT IMPACT & RECOMMEND</button>
+    </div>
+
+    <div id="resultPanel" class="result-hidden">
+      <div id="alertBanner" class="alert-banner"></div>
+
+      <div class="rec-grid">
+        <div class="rec-item">
+          <div class="rec-item-label">👮 Officers</div>
+          <div class="rec-item-val" id="r_officers">—</div>
+          <div class="rec-item-desc" id="r_officers_desc"></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-item-label">🚧 Barricades</div>
+          <div class="rec-item-val" id="r_barricades">—</div>
+          <div class="rec-item-desc" id="r_barricades_desc"></div>
+        </div>
+        <div class="rec-item">
+          <div class="rec-item-label">⏱ Response</div>
+          <div class="rec-item-val" id="r_response">—</div>
+          <div class="rec-item-desc">Minutes to deploy</div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;">
+        <div class="card-title">🗺 <span>Diversion Plan</span></div>
+        <div id="r_diversion" style="font-size:14px;line-height:1.7;"></div>
+      </div>
+
+      <div id="r_note" class="note-box"></div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="card-title">📊 <span>Impact Score Breakdown</span></div>
+        <canvas id="scoreChart" height="120"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== HOTSPOTS ========== -->
+<div id="hotspots" class="page">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🔴 <span>Top 10 Hotspot Junctions</span></div>
+      <canvas id="junctionChart" height="320"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">🗺 <span>Spatial Coverage</span></div>
+      <div class="map-placeholder" style="position:relative;overflow:hidden;">
+        <div style="position:absolute;width:100%;height:100%;background:radial-gradient(ellipse at 40% 40%, rgba(99,102,241,0.08) 0%, transparent 60%);"></div>
+        <!-- Simulated dots -->
+        <svg width="100%" height="100%" style="position:absolute;top:0;left:0;">
+          <circle cx="38%" cy="55%" r="6" fill="#ff3b3b" opacity="0.9"><animate attributeName="r" values="6;12;6" dur="2s" repeatCount="indefinite"/></circle>
+          <circle cx="52%" cy="60%" r="5" fill="#f59e0b" opacity="0.8"><animate attributeName="r" values="5;10;5" dur="2.5s" repeatCount="indefinite"/></circle>
+          <circle cx="45%" cy="45%" r="4" fill="#ff3b3b" opacity="0.7"><animate attributeName="r" values="4;9;4" dur="1.8s" repeatCount="indefinite"/></circle>
+          <circle cx="60%" cy="52%" r="5" fill="#f59e0b" opacity="0.7"><animate attributeName="r" values="5;9;5" dur="2.2s" repeatCount="indefinite"/></circle>
+          <circle cx="35%" cy="42%" r="3" fill="#22c55e" opacity="0.6"><animate attributeName="r" values="3;7;3" dur="3s" repeatCount="indefinite"/></circle>
+          <circle cx="55%" cy="38%" r="4" fill="#ff3b3b" opacity="0.7"><animate attributeName="r" values="4;8;4" dur="2s" repeatCount="indefinite"/></circle>
+          <circle cx="42%" cy="68%" r="3" fill="#f59e0b" opacity="0.6"></circle>
+          <circle cx="65%" cy="45%" r="3" fill="#22c55e" opacity="0.5"></circle>
+          <circle cx="30%" cy="62%" r="4" fill="#f59e0b" opacity="0.7"></circle>
+          <circle cx="50%" cy="55%" r="8" fill="#ff3b3b" opacity="0.9"><animate attributeName="r" values="8;14;8" dur="1.5s" repeatCount="indefinite"/></circle>
+          <text x="50%" y="88%" text-anchor="middle" fill="#64748b" font-size="12" font-family="Space Grotesk">Bengaluru City · Event Hotspot Map</text>
+          <text x="50%" y="94%" text-anchor="middle" fill="#3b4a5c" font-size="10" font-family="Space Grotesk">● High Impact  ● Medium  ● Low</text>
+        </svg>
+        <div style="z-index:1;text-align:center;">
+          <div style="font-size:12px;color:var(--muted);">Connect to Mapbox/Google Maps API for live map</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏙 <span>Junction Event Table</span></div>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Junction</th>
+          <th>Total Events</th>
+          <th>Highest Category</th>
+          <th>Typical Impact</th>
+          <th>Recommended Standing Deployment</th>
+        </tr>
+      </thead>
+      <tbody id="junctionTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ========== PATTERNS ========== -->
+<div id="patterns" class="page">
+  <div class="kpi-strip">
+    <div class="kpi red"><div class="kpi-label">Peak Hour</div><div class="kpi-value">21:00</div><div class="kpi-sub">Highest event volume</div></div>
+    <div class="kpi amber"><div class="kpi-label">Peak Day</div><div class="kpi-value">Wed</div><div class="kpi-sub">1,359 events</div></div>
+    <div class="kpi accent"><div class="kpi-label">Top Cause</div><div class="kpi-value">Veh.</div><div class="kpi-sub">Breakdown (60%)</div></div>
+    <div class="kpi blue"><div class="kpi-label">Avg Duration</div><div class="kpi-value">~2h</div><div class="kpi-sub">Resolved events</div></div>
+    <div class="kpi green"><div class="kpi-label">Unplanned %</div><div class="kpi-value">94%</div><div class="kpi-sub">7,706 / 8,173</div></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">🔥 <span>Top Event Causes</span></div>
+      <canvas id="causeChart" height="260"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">📅 <span>Weekend vs Weekday Split</span></div>
+      <div style="padding:30px 0;">
+        <canvas id="weekendChart" height="220"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🎯 <span>Event Category vs Impact Level</span></div>
+    <canvas id="stackedChart" height="200"></canvas>
+  </div>
+</div>
+
+<!-- ========== ABOUT ========== -->
+<div id="about" class="page">
+  <div class="about-grid" style="margin-bottom:20px;">
+    <div class="about-card">
+      <h3>🎯 Problem Statement</h3>
+      <p>Political rallies, festivals, sports events, construction activities, and sudden gatherings create localized traffic breakdowns across Bengaluru.</p>
+      <p>Current challenges: event impact is not quantified in advance, resource deployment is purely experience-driven, and there is no post-event learning system.</p>
+      <p style="color:var(--text);font-style:italic;">"How can historical and real-time data be used to forecast event-related traffic impact and recommend optimal manpower, barricading, and diversion plans?"</p>
+    </div>
+    <div class="about-card">
+      <h3>🤖 ML Model Performance</h3>
+      <div class="model-stat"><span>Algorithm</span><span>Random Forest Classifier</span></div>
+      <div class="model-stat"><span>Training Samples</span><span>6,538</span></div>
+      <div class="model-stat"><span>Test Samples</span><span>1,635</span></div>
+      <div class="model-stat"><span>Overall Accuracy</span><span>98.8%</span></div>
+      <div class="model-stat"><span>High Impact F1</span><span>0.96</span></div>
+      <div class="model-stat"><span>Medium Impact F1</span><span>0.99</span></div>
+      <div class="model-stat"><span>Low Impact F1</span><span>0.99</span></div>
+      <div class="model-stat"><span>Cross-Validation</span><span>Stratified 80/20</span></div>
+    </div>
+    <div class="about-card">
+      <h3>⚙️ Feature Engineering</h3>
+      <ul>
+        <li>is_route_event — single vs multi-location</li>
+        <li>vehicle_related_event — vehicle involvement flag</li>
+        <li>event_category — NLP-derived from descriptions</li>
+        <li>hour, weekday, weekend — temporal features</li>
+        <li>traffic_period — Peak / Off-Peak classification</li>
+        <li>event_duration_hours — calculated from timestamps</li>
+        <li>impact_score — composite severity score (0–10)</li>
+      </ul>
+    </div>
+    <div class="about-card">
+      <h3>🛠 Tech Stack</h3>
+      <p style="margin-bottom:8px;">Machine Learning & Data:</p>
+      <div>
+        <span class="tech-tag">Python</span><span class="tech-tag">pandas</span>
+        <span class="tech-tag">scikit-learn</span><span class="tech-tag">XGBoost</span>
+        <span class="tech-tag">RandomForest</span>
+      </div>
+      <p style="margin:10px 0 8px;">Backend & API:</p>
+      <div>
+        <span class="tech-tag">FastAPI</span><span class="tech-tag">Uvicorn</span>
+        <span class="tech-tag">joblib</span>
+      </div>
+      <p style="margin:10px 0 8px;">Frontend & Visualization:</p>
+      <div>
+        <span class="tech-tag">HTML/CSS/JS</span><span class="tech-tag">Chart.js</span>
+        <span class="tech-tag">Folium</span><span class="tech-tag">Mapbox</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="about-card" style="max-width:100%;">
+    <h3>🔄 System Architecture</h3>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0;margin-top:16px;text-align:center;">
+      <div style="background:rgba(99,102,241,0.12);border:1px solid rgba(99,102,241,0.3);border-radius:8px;padding:16px;margin:4px;">
+        <div style="font-size:24px;margin-bottom:6px;">📥</div>
+        <div style="font-size:11px;font-weight:600;color:var(--cyan);">DATA INGESTION</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Historical events + Real-time reports</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted);">→</div>
+      <div style="background:rgba(6,182,212,0.1);border:1px solid rgba(6,182,212,0.3);border-radius:8px;padding:16px;margin:4px;">
+        <div style="font-size:24px;margin-bottom:6px;">⚙️</div>
+        <div style="font-size:11px;font-weight:600;color:var(--cyan);">FEATURE ENG.</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Temporal + spatial + categorical</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted);">→</div>
+      <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);border-radius:8px;padding:16px;margin:4px;">
+        <div style="font-size:24px;margin-bottom:6px;">🤖</div>
+        <div style="font-size:11px;font-weight:600;color:var(--cyan);">ML MODEL</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Impact score prediction</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted);">→</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0;text-align:center;margin-top:4px;">
+      <div></div>
+      <div></div>
+      <div></div>
+      <div style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted);">→</div>
+      <div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:16px;margin:4px;">
+        <div style="font-size:24px;margin-bottom:6px;">📋</div>
+        <div style="font-size:11px;font-weight:600;color:var(--amber);">RECOMMENDER</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Manpower + barricade + diversion</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted);">→</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+      <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:16px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">🖥</div>
+        <div style="font-size:11px;font-weight:600;color:var(--green);">DASHBOARD</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Real-time control room visualization</div>
+      </div>
+      <div style="background:rgba(255,59,59,0.1);border:1px solid rgba(255,59,59,0.3);border-radius:8px;padding:16px;text-align:center;">
+        <div style="font-size:24px;margin-bottom:6px;">🔄</div>
+        <div style="font-size:11px;font-weight:600;color:var(--red);">FEEDBACK LOOP</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;">Post-event learning & model retraining</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
