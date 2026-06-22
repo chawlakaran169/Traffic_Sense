@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TrafficSense — Event Congestion Intelligence</title>
+  <link rel="stylesheet" href="static/styles.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🚦</div>
+      <h1>Traffic<span>Sense</span></h1>
+    </div>
+    <div class="header-right">
+      <div class="live-badge"><div class="live-dot"></div> LIVE SYSTEM</div>
+      <div style="font-size:12px;color:var(--muted);">Bengaluru Traffic Control</div>
+    </div>
+  </header>
+  <nav>
+    <div class="tab active" onclick="showPage('dashboard',this)">📊 Dashboard</div>
+    <div class="tab" onclick="showPage('predict',this)">🔮 Predict & Recommend</div>
+    <div class="tab" onclick="showPage('hotspots',this)">📍 Hotspots</div>
+    <div class="tab" onclick="showPage('patterns',this)">📈 Patterns</div>
+    <div class="tab" onclick="showPage('about',this)">ℹ️ About</div>
+  </nav>
+  <main>
+    <div id="dashboard" class="page active">
+      <div class="kpi-strip">
+        <div class="kpi accent">
+          <div class="kpi-label">Total Events</div>
+          <div class="kpi-value">8,173</div>
+          <div class="kpi-sub">Bengaluru 2023–24</div>
+        </div>
+        <div class="kpi red">
+          <div class="kpi-label">High Impact</div>
+          <div class="kpi-value">951</div>
+          <div class="kpi-sub">11.6% of all events</div>
+        </div>
+        <div class="kpi amber">
+          <div class="kpi-label">Medium Impact</div>
+          <div class="kpi-value">4,662</div>
+          <div class="kpi-sub">57% of all events</div>
+        </div>
+        <div class="kpi green">
+          <div class="kpi-label">Low Impact</div>
+          <div class="kpi-value">2,560</div>
+          <div class="kpi-sub">31.3% of all events</div>
+        </div>
+        <div class="kpi blue">
+          <div class="kpi-label">Model Accuracy</div>
+          <div class="kpi-value">98.8%</div>
+          <div class="kpi-sub">Random Forest · 100 trees</div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🗂 <span>Event Category Breakdown</span></div>
+          <div class="chart-wrap"><canvas id="categoryChart" height="240"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">⚡ <span>Impact Level Distribution</span></div>
+          <div class="chart-wrap"><canvas id="impactChart" height="240"></canvas></div>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🕐 <span>Events by Hour of Day</span></div>
+          <div class="chart-wrap"><canvas id="hourChart" height="200"></canvas></div>
+        </div>
+        <div class="card">
+          <div class="card-title">📅 <span>Events by Day of Week</span></div>
+          <div class="chart-wrap"><canvas id="weekdayChart" height="200"></canvas></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 <span>Recent Events Feed</span></div>
+        <div class="event-log" id="eventLog"></div>
+      </div>
+    </div>
+  </main>
+  <script src="static/app.js"></script>
+</body>
+</html>
