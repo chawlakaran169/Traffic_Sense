@@ -10,7 +10,7 @@ def index():
 
 @app.route('/dashboard')
 def traffic_dashboard():
-    return render_template('traffic_dashboard.html')
+    return render_template('Demo_Dashboard.html')
 
 
 if __name__ == '__main__':
