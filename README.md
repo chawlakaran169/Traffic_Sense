@@ -1,11 +1,14 @@
 # TrafficSense
 
-TrafficSense is a static dashboard for analyzing Bengaluru traffic incident data, visualizing trends, and generating response recommendations.
+TrafficSense is a Flask dashboard for analyzing Bengaluru traffic incident data, visualizing trends, and generating response recommendations.
 
 ## Files
-- `traffic_dashboard.html` — main dashboard UI
-- `styles.css` — dashboard styling
-- `app.js` — charts, prediction logic, and recommendations
+- `app.py` â€” Flask application entry point
+- `templates/traffic_dashboard.html` â€” main dashboard UI
+- `static/styles.css` â€” dashboard styling
+- `static/app.js` â€” charts, prediction logic, and recommendations
 
 ## Run locally
-Open `traffic_dashboard.html` in a browser, or serve the folder with a simple static server.
+1. Install dependencies: `pip install -r requirements.txt`
+2. Start the app: `python app.py`
+3. Open http://127.0.0.1:5000
