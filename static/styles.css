@@ -190,6 +190,17 @@ select:focus, input:focus { border-color: var(--cyan); }
   font-size: 13px; color: var(--accent);
 }
 
+/* Diversion Plan styles */
+.diversion-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+.diversion-header { display:flex;justify-content:space-between;align-items:center;margin-bottom:8px; }
+.diversion-count { font-family: 'JetBrains Mono', monospace; color: var(--cyan); font-weight:700; }
+.diversion-row { display:flex; gap:12px; margin:8px 0; align-items:flex-start; }
+.diversion-text { color: var(--muted); font-size:13px; }
+.diversion-actions { margin:6px 0 0 0; padding-left:14px; color:var(--text); }
+.diversion-actions li { margin:6px 0; color:var(--text); }
+.diversion-percent { color:var(--green); font-size:18px; font-weight:800; padding:6px 10px; background: rgba(34,197,94,0.06); border-radius:8px; display:inline-block; }
+
+
 /* HOTSPOT TABLE */
 table { width: 100%; border-collapse: collapse; }
 th {

@@ -926,9 +926,9 @@ window.addEventListener('load', () => {
 
 // ========== PREDICTION ENGINE ==========
 const RECS = {
-  High: { officers:8, wardens:4, barricades:6, barricadeType:'Heavy Metal Barricades', diversionRoutes:2, diversionDesc:'Activate 2 alternate diversion routes with marshals at entry points. Update Google Maps/Waze via API.', alert:'RED 🔴', alertEmoji:'🚨', responseTime:10 },
-  Medium: { officers:4, wardens:2, barricades:3, barricadeType:'Cone Barricades + 1 Metal', diversionRoutes:1, diversionDesc:'Activate 1 advisory diversion route. Deploy VMS board messaging at 500m upstream.', alert:'AMBER 🟡', alertEmoji:'⚠️', responseTime:20 },
-  Low: { officers:1, wardens:1, barricades:1, barricadeType:'Cone Barricades', diversionRoutes:0, diversionDesc:'No active diversion needed. Monitor junction via CCTV. Officer on standby.', alert:'GREEN 🟢', alertEmoji:'✅', responseTime:30 }
+  High: { officers:8, wardens:4, barricades:6, barricadeType:'Heavy Metal Barricades', diversionRoutes:2, alert:'RED 🔴', alertEmoji:'🚨', responseTime:10 },
+  Medium: { officers:4, wardens:2, barricades:3, barricadeType:'Cone Barricades + 1 Metal', diversionRoutes:1, alert:'AMBER 🟡', alertEmoji:'⚠️', responseTime:20 },
+  Low: { officers:1, wardens:1, barricades:1, barricadeType:'Cone Barricades', diversionRoutes:0, alert:'GREEN 🟢', alertEmoji:'✅', responseTime:30 }
 };
 const CATEGORY_NOTES = {
   'Accident': 'Coordinate with ambulance (108) + fire brigade (101). Request medical teams if injuries reported.',

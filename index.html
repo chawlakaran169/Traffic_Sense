@@ -488,6 +488,14 @@
       </div>
 
       <div class="form-group">
+        <label>Road Closure Required?</label>
+        <select id="p_road_closure">
+          <option value="No">No</option>
+          <option value="Yes">Yes</option>
+        </select>
+      </div>
+
+      <div class="form-group">
         <label>Priority</label>
         <select id="p_priority">
           <option value="High">High</option>
@@ -926,9 +934,9 @@ window.addEventListener('load', () => {
 
 // ========== PREDICTION ENGINE ==========
 const RECS = {
-  High: { officers:8, wardens:4, barricades:6, barricadeType:'Heavy Metal Barricades', diversionRoutes:2, diversionDesc:'Activate 2 alternate diversion routes with marshals at entry points. Update Google Maps/Waze via API.', alert:'RED 🔴', alertEmoji:'🚨', responseTime:10 },
-  Medium: { officers:4, wardens:2, barricades:3, barricadeType:'Cone Barricades + 1 Metal', diversionRoutes:1, diversionDesc:'Activate 1 advisory diversion route. Deploy VMS board messaging at 500m upstream.', alert:'AMBER 🟡', alertEmoji:'⚠️', responseTime:20 },
-  Low: { officers:1, wardens:1, barricades:1, barricadeType:'Cone Barricades', diversionRoutes:0, diversionDesc:'No active diversion needed. Monitor junction via CCTV. Officer on standby.', alert:'GREEN 🟢', alertEmoji:'✅', responseTime:30 }
+  High: { officers:8, wardens:4, barricades:6, barricadeType:'Heavy Metal Barricades', diversionRoutes:2, alert:'RED 🔴', alertEmoji:'🚨', responseTime:10 },
+  Medium: { officers:4, wardens:2, barricades:3, barricadeType:'Cone Barricades + 1 Metal', diversionRoutes:1, alert:'AMBER 🟡', alertEmoji:'⚠️', responseTime:20 },
+  Low: { officers:1, wardens:1, barricades:1, barricadeType:'Cone Barricades', diversionRoutes:0, alert:'GREEN 🟢', alertEmoji:'✅', responseTime:30 }
 };
 const CATEGORY_NOTES = {
   'Accident': 'Coordinate with ambulance (108) + fire brigade (101). Request medical teams if injuries reported.',
@@ -993,7 +1001,73 @@ function runPrediction() {
   document.getElementById('r_response').textContent = rec.responseTime + 'm';
 
   // Diversion
-  document.getElementById('r_diversion').innerHTML = `<strong style="color:var(--cyan)">${rec.diversionRoutes} Diversion Route(s)</strong><br><span style="color:var(--muted)">${rec.diversionDesc}</span>`;
+  const roadClosure = (document.getElementById('p_road_closure') || {value:'No'}).value === 'Yes';
+  // Compute dynamic diversion recommendation
+  const baseRoutes = rec.diversionRoutes || 0;
+  let routes = baseRoutes;
+  if (roadClosure) routes += 1;
+  if (route === 1) routes += 1; // route events need more alternatives
+  if (level === 'High' && isPeak(hour)) routes += 1;
+  routes = Math.min(Math.max(routes, 0), 4);
+
+  // Expected congestion reduction ranges per level, adjusted by routes & roadClosure
+  const baseReduction = level === 'High' ? [25,35] : level === 'Medium' ? [12,25] : [5,12];
+  const routeBoostLow = (routes - baseRoutes) * 4;
+  const routeBoostHigh = (routes - baseRoutes) * 6;
+  const closureBoostLow = roadClosure ? 3 : 0;
+  const closureBoostHigh = roadClosure ? 5 : 0;
+  let reductionLow = Math.max(1, Math.round(baseReduction[0] + routeBoostLow + closureBoostLow));
+  let reductionHigh = Math.min(60, Math.round(baseReduction[1] + routeBoostHigh + closureBoostHigh));
+
+  // Reason
+  const reasonParts = [];
+  reasonParts.push(`${level}-impact ${category.toLowerCase()} detected during ${period.toLowerCase()}`);
+  if (vehicle) reasonParts.push('vehicle involved');
+  if (roadClosure) reasonParts.push('road closure required');
+  const reason = reasonParts.join('; ')+'.';
+
+  // Recommended actions
+  const actions = [];
+  if (level === 'High') {
+    actions.push('Activate alternate corridor routes');
+    actions.push('Deploy marshals at diversion entry points');
+    actions.push('Coordinate with nearby police stations');
+    actions.push('Deploy VMS & temporary signage at upstream approaches');
+  } else if (level === 'Medium') {
+    actions.push('Activate advisory diversion route');
+    actions.push('Deploy VMS messaging and one marshal at key points');
+  } else {
+    actions.push('Monitor via CCTV and keep officer on standby');
+  }
+  if (roadClosure) actions.unshift('Implement full road closure and detour signage');
+  if (route === 1) actions.push('Publish advisory across local channels and VMS');
+
+  // Navigation advisory
+  const navAdvisory = 'Suggested route updates for navigation systems and traffic operators.';
+
+  // Traffic operator instructions
+  const instrInterval = level === 'High' ? 10 : level === 'Medium' ? 15 : 30;
+  const operatorInstructions = `Monitor congestion every ${instrInterval} minutes and adjust diversion flow as required. Send status updates to control room.`;
+
+  // Render Diversion Plan card (keeps dashboard dark theme styling)
+  const diversionHtml = `
+    <div class="diversion-card">
+      <div class="diversion-header"><div class="card-title">🗺 <span>Diversion Plan</span></div><div class="diversion-count">${routes} Route${routes!==1?'s':''}</div></div>
+      <div class="diversion-row"><strong>Reason:</strong><div class="diversion-text">${reason}</div></div>
+      <div class="diversion-row"><strong>Recommended Actions:</strong>
+        <ul class="diversion-actions">
+          ${actions.map(a => `<li>• ${a}</li>`).join('')}
+        </ul>
+      </div>
+      <div class="diversion-row"><strong>Expected Congestion Reduction:</strong>
+        <div class="diversion-percent">${reductionLow}–${reductionHigh}%</div>
+      </div>
+      <div class="diversion-row"><strong>Navigation Advisory:</strong><div class="diversion-text">${navAdvisory}</div></div>
+      <div class="diversion-row"><strong>Traffic Operator Instructions:</strong><div class="diversion-text">${operatorInstructions}</div></div>
+      <div style="margin-top:10px;color:var(--muted);font-size:12px;">Corridor: ${document.getElementById('p_corridor').value} · Closure: ${roadClosure? 'Yes':'No'}</div>
+    </div>`;
+
+  document.getElementById('r_diversion').innerHTML = diversionHtml;
 
   // Note
   const note = CATEGORY_NOTES[category] || 'Follow standard operating procedure. Update incident log after resolution.';
