@@ -5,6 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TrafficSense — Event Congestion Intelligence</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+<!-- ═══ MAPPLS MAP SDK ═══════════════════════════════════════════════════ -->
+<!-- STEP 1: Paste your Map SDK Key below replacing YOUR_MAP_SDK_KEY       -->
+<script>
+  window.MAPPLS_MAP_SDK_KEY  = '24f5685fa2a94958c5adb13fab74af1f';   // ← replace this
+  window.MAPPLS_REST_API_KEY = '24f5685fa2a94958c5adb13fab74af1f';  // ← replace this
+</script>
+<!-- ════════════════════════════════════════════════════════════════════ -->
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap');
 
@@ -541,28 +549,36 @@
       <div class="card-title">🔴 <span>Top 10 Hotspot Junctions</span></div>
       <canvas id="junctionChart" height="320"></canvas>
     </div>
-    <div class="card">
-      <div class="card-title">🗺 <span>Spatial Coverage</span></div>
-      <div class="map-placeholder" style="position:relative;overflow:hidden;">
-        <div style="position:absolute;width:100%;height:100%;background:radial-gradient(ellipse at 40% 40%, rgba(99,102,241,0.08) 0%, transparent 60%);"></div>
-        <!-- Simulated dots -->
-        <svg width="100%" height="100%" style="position:absolute;top:0;left:0;">
-          <circle cx="38%" cy="55%" r="6" fill="#ff3b3b" opacity="0.9"><animate attributeName="r" values="6;12;6" dur="2s" repeatCount="indefinite"/></circle>
-          <circle cx="52%" cy="60%" r="5" fill="#f59e0b" opacity="0.8"><animate attributeName="r" values="5;10;5" dur="2.5s" repeatCount="indefinite"/></circle>
-          <circle cx="45%" cy="45%" r="4" fill="#ff3b3b" opacity="0.7"><animate attributeName="r" values="4;9;4" dur="1.8s" repeatCount="indefinite"/></circle>
-          <circle cx="60%" cy="52%" r="5" fill="#f59e0b" opacity="0.7"><animate attributeName="r" values="5;9;5" dur="2.2s" repeatCount="indefinite"/></circle>
-          <circle cx="35%" cy="42%" r="3" fill="#22c55e" opacity="0.6"><animate attributeName="r" values="3;7;3" dur="3s" repeatCount="indefinite"/></circle>
-          <circle cx="55%" cy="38%" r="4" fill="#ff3b3b" opacity="0.7"><animate attributeName="r" values="4;8;4" dur="2s" repeatCount="indefinite"/></circle>
-          <circle cx="42%" cy="68%" r="3" fill="#f59e0b" opacity="0.6"></circle>
-          <circle cx="65%" cy="45%" r="3" fill="#22c55e" opacity="0.5"></circle>
-          <circle cx="30%" cy="62%" r="4" fill="#f59e0b" opacity="0.7"></circle>
-          <circle cx="50%" cy="55%" r="8" fill="#ff3b3b" opacity="0.9"><animate attributeName="r" values="8;14;8" dur="1.5s" repeatCount="indefinite"/></circle>
-          <text x="50%" y="88%" text-anchor="middle" fill="#64748b" font-size="12" font-family="Space Grotesk">Bengaluru City · Event Hotspot Map</text>
-          <text x="50%" y="94%" text-anchor="middle" fill="#3b4a5c" font-size="10" font-family="Space Grotesk">● High Impact  ● Medium  ● Low</text>
-        </svg>
-        <div style="z-index:1;text-align:center;">
-          <div style="font-size:12px;color:var(--muted);">Connect to Mapbox/Google Maps API for live map</div>
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div class="card-title" style="padding:16px 20px 0;">🗺 <span>Live Hotspot Map — Bengaluru</span></div>
+
+      <!-- MAP LEGEND -->
+      <div style="display:flex;gap:18px;padding:8px 20px 10px;flex-wrap:wrap;">
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#ff3b3b;display:inline-block;"></span> High Impact
+        </span>
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span> Medium Impact
+        </span>
+        <span style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;">
+          <span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Low Impact
+        </span>
+        <span style="font-size:11px;color:var(--muted);margin-left:auto;">Click any pin for details</span>
+      </div>
+
+      <!-- MAPPLS MAP CONTAINER -->
+      <div id="mappls-map" style="width:100%;height:420px;"></div>
+
+      <!-- MAP INFO PANEL — shows on pin click -->
+      <div id="mapInfoPanel" style="display:none;padding:14px 20px;background:var(--surface);border-top:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <div>
+            <div id="mapInfoTitle" style="font-size:14px;font-weight:600;color:var(--text);"></div>
+            <div id="mapInfoMeta" style="font-size:12px;color:var(--muted);margin-top:3px;"></div>
+          </div>
+          <div id="mapInfoBadge" class="badge" style="font-size:12px;padding:4px 12px;"></div>
         </div>
+        <div id="mapInfoDeploy" style="font-size:12px;color:var(--cyan);margin-top:8px;"></div>
       </div>
     </div>
   </div>
@@ -1019,7 +1035,152 @@ function showPage(id, el) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   el.classList.add('active');
+  // Initialise map when Hotspots tab is first opened
+  if (id === 'hotspots' && !window._mapInitDone) {
+    window._mapInitDone = true;
+    if (window.mappls || window.L) initMapplsMap();
+    else window._pendingMapInit = true;
+  }
 }
+
+// ========== MAPPLS MAP ==========
+
+// Hotspot data — real Bengaluru junctions with coordinates
+const HOTSPOTS = [
+  { name:'Mekhri Circle',              lat:13.0075, lng:77.5791, events:64, impact:'High',   category:'Vehicle Breakdown', deploy:'2 Officers + 1 peak extra' },
+  { name:'Ayyappa Temple Junc',        lat:12.9220, lng:77.6741, events:49, impact:'Medium', category:'Traffic Congestion', deploy:'1 Officer + monitoring' },
+  { name:'Satellite Bus Stand Junc',   lat:12.9784, lng:77.5497, events:43, impact:'Medium', category:'Vehicle Breakdown', deploy:'1 Officer on call' },
+  { name:'Yeshwanthpura Circle',       lat:13.0225, lng:77.5502, events:38, impact:'High',   category:'Road Work',         deploy:'2 Officers + barricade team' },
+  { name:'Yelahanka Circle',           lat:13.1007, lng:77.5963, events:34, impact:'Medium', category:'Traffic Congestion', deploy:'1 Officer + signal review' },
+  { name:'Silk Board Junction',        lat:12.9172, lng:77.6227, events:33, impact:'High',   category:'Accident',          deploy:'3 Officers + first aid ready' },
+  { name:'Toll Gate Mysore Road',      lat:12.9311, lng:77.4990, events:33, impact:'Medium', category:'Vehicle Breakdown', deploy:'2 Officers' },
+  { name:'Jalahalli Cross (SM Circle)',lat:13.0373, lng:77.5492, events:32, impact:'High',   category:'Traffic Congestion', deploy:'2 Officers + peak diversion' },
+  { name:'Nagavara ORR Junction',      lat:13.0491, lng:77.6280, events:32, impact:'Medium', category:'Road Work',         deploy:'1 Officer + PWD liaison' },
+  { name:'K R Circle',                 lat:12.9766, lng:77.5713, events:31, impact:'High',   category:'Water Logging',     deploy:'2 Officers + drainage alert' },
+];
+
+const IMPACT_COLOR = { High:'#ff3b3b', Medium:'#f59e0b', Low:'#22c55e' };
+
+let mapInstance = null;
+let mapMarkers  = [];
+
+function initMapplsMap() {
+  const container = document.getElementById('mappls-map');
+  if (!container) return;
+  if (mapInstance) return;
+
+  if (window.mappls) {
+    mapInstance = new mappls.Map('mappls-map', {
+      center:  [77.5946, 12.9716],   // Bengaluru city centre
+      zoom:    11,
+      zoomControl: true,
+      search:  false,
+    });
+
+    mapInstance.on('load', function () {
+      HOTSPOTS.forEach(function(h) {
+        const color  = IMPACT_COLOR[h.impact] || '#06b6d4';
+        const radius = h.events > 50 ? 14 : h.events > 35 ? 11 : 9;
+
+        const svgMarker = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="${radius*2+8}" height="${radius*2+20}" viewBox="0 0 ${radius*2+8} ${radius*2+20}">
+            <circle cx="${radius+4}" cy="${radius+4}" r="${radius}" fill="${color}" opacity="0.9" stroke="white" stroke-width="2"/>
+            <text x="${radius+4}" y="${radius+9}" text-anchor="middle" font-size="${radius > 11 ? 10 : 8}" font-family="sans-serif" font-weight="bold" fill="white">${h.events}</text>
+            <polygon points="${radius-2+4},${radius*2+4} ${radius+4},${radius*2+16} ${radius+6+4},${radius*2+4}" fill="${color}"/>
+          </svg>`;
+
+        const marker = new mappls.Marker({
+          map:      mapInstance,
+          position: { lat: h.lat, lng: h.lng },
+          icon: {
+            url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svgMarker),
+            size: { width: radius*2+8, height: radius*2+20 },
+            anchor: { x: radius+4, y: radius*2+16 },
+          },
+          draggable: false,
+          fitbounds: false,
+        });
+
+        marker.addListener('click', function() {
+          showMapInfo(h);
+
+          const iw = new mappls.InfoWindow({
+            map:      mapInstance,
+            position: { lat: h.lat, lng: h.lng },
+            content: `
+              <div style="font-family:sans-serif;min-width:200px;padding:4px;">
+                <div style="font-weight:700;font-size:13px;color:#0a1628;margin-bottom:4px;">${h.name}</div>
+                <div style="font-size:11px;color:#64748b;">${h.events} events · <b style="color:${color}">${h.impact} Impact</b></div>
+                <div style="font-size:11px;color:#64748b;margin-top:3px;">Top: ${h.category}</div>
+                <div style="font-size:11px;color:#0891b2;margin-top:3px;">Deploy: ${h.deploy}</div>
+              </div>`,
+            closeButton: true,
+          });
+        });
+
+        mapMarkers.push(marker);
+      });
+
+      const bounds = HOTSPOTS.map(h => ({ lat: h.lat, lng: h.lng }));
+      mapInstance.fitBounds(bounds, { padding: 60 });
+    });
+    return;
+  }
+
+  if (window.L) {
+    mapInstance = L.map('mappls-map', {
+      center: [12.9716, 77.5946],
+      zoom: 11,
+      zoomControl: true,
+    });
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(mapInstance);
+
+    HOTSPOTS.forEach(function(h) {
+      const marker = L.marker([h.lat, h.lng]).addTo(mapInstance);
+      marker.on('click', function() {
+        showMapInfo(h);
+        marker.bindPopup(`<strong>${h.name}</strong><br>${h.events} events · ${h.impact} Impact`).openPopup();
+      });
+      mapMarkers.push(marker);
+    });
+
+    const bounds = HOTSPOTS.map(h => [h.lat, h.lng]);
+    mapInstance.fitBounds(bounds, { padding: [60, 60] });
+    return;
+  }
+}
+
+function showMapInfo(h) {
+  const panel = document.getElementById('mapInfoPanel');
+  const color = IMPACT_COLOR[h.impact] || '#06b6d4';
+  const badgeClass = { High:'red', Medium:'amber', Low:'green' }[h.impact] || 'green';
+
+  document.getElementById('mapInfoTitle').textContent = h.name;
+  document.getElementById('mapInfoMeta').textContent  = `${h.events} total events · Top category: ${h.category}`;
+  document.getElementById('mapInfoDeploy').textContent = '🚔 Recommended: ' + h.deploy;
+
+  const badge = document.getElementById('mapInfoBadge');
+  badge.textContent  = h.impact + ' Impact';
+  badge.className    = 'badge ' + badgeClass;
+
+  panel.style.display = 'block';
+}
+
+// Called by Mappls SDK script tag when loaded (callback=mapplsLoaded)
+function mapplsLoaded() {
+  console.log('Mappls SDK loaded. window.mappls=', !!window.mappls, 'pendingInit=', !!window._pendingMapInit);
+  if (window._pendingMapInit) initMapplsMap();
+}
+
+// Also try on DOMContentLoaded in case SDK loaded first
+window.addEventListener('load', function() {
+  if (window.mappls && window._pendingMapInit) initMapplsMap();
+});
 </script>
+<script src="https://apis.mappls.com/advancedmaps/v1/24f5685fa2a94958c5adb13fab74af1f/map_load?v=3.0&callback=mapplsLoaded"></script>
 </body>
 </html>
